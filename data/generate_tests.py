@@ -10,14 +10,15 @@ Usage:
 
 import json
 from pathlib import Path
+from openai import OpenAI
 from pydantic import BaseModel, Field
-from litellm import completion
 from tenacity import retry, wait_exponential
 from dotenv import load_dotenv
 
 load_dotenv(override=True)
 
 MODEL = "gpt-4.1-nano"
+client = OpenAI()
 KNOWLEDGE_BASE_PATH = Path(__file__).parent.parent / "knowledge-base"
 OUTPUT_PATH = Path(__file__).parent / "tests.jsonl"
 
@@ -143,7 +144,7 @@ Generate exactly {n} questions of category '{category}'. Make them varied — co
 
     user_prompt = f"Generate {n} benchmark questions of category '{category}'. Ensure they are varied and cover different parts of the knowledge base."
 
-    response = completion(
+    response = client.beta.chat.completions.parse(
         model=MODEL,
         messages=[
             {"role": "system", "content": system_prompt},
@@ -152,7 +153,7 @@ Generate exactly {n} questions of category '{category}'. Make them varied — co
         response_format=TestQuestions,
     )
 
-    result = TestQuestions.model_validate_json(response.choices[0].message.content)
+    result = response.choices[0].message.parsed
     # Ensure category field is set correctly
     for q in result.questions:
         q.category = category

@@ -2,14 +2,24 @@ from pathlib import Path
 from openai import OpenAI
 from dotenv import load_dotenv
 from chromadb import PersistentClient
-from litellm import completion
 from pydantic import BaseModel, Field
 from tenacity import retry, wait_exponential
 
 load_dotenv(override=True)
 
-# Switch to "groq/openai/gpt-oss-120b" for a faster/cheaper alternative
-MODEL = "openai/gpt-4.1-nano"
+# --- Provider config ---
+# Switch MODEL + BASE_URL to change LLM provider; no other code changes needed.
+MODEL = "gpt-4.1-nano"
+# MODEL = "claude-sonnet-4-5"    # Anthropic
+# MODEL = "gemini-2.0-flash"     # Google
+
+BASE_URL = None                   # None = OpenAI (default endpoint)
+# BASE_URL = "https://api.anthropic.com/v1/"
+# BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
+
+embedding_client = OpenAI()                  # always OpenAI for embeddings
+llm = OpenAI(base_url=BASE_URL)              # swap base_url to switch provider
+
 DB_NAME = str(Path(__file__).parent.parent / "preprocessed_db")
 collection_name = "docs"
 embedding_model = "text-embedding-3-large"
@@ -18,10 +28,11 @@ RETRIEVAL_K = 20
 FINAL_K = 10
 
 wait = wait_exponential(multiplier=1, min=10, max=240)
-openai = OpenAI()
+
 chroma = PersistentClient(path=DB_NAME)
 collection = chroma.get_or_create_collection(collection_name)
 
+# RAG grounding prompt — injects retrieved context into generation
 SYSTEM_PROMPT = """
 You are a knowledgeable, friendly assistant representing the company Insurellm.
 You are chatting with a user about Insurellm.
@@ -45,6 +56,7 @@ class RankOrder(BaseModel):
     )
 
 
+# LLM reranking prompt — structured output re-orders retrieval results by relevance
 @retry(wait=wait)
 def rerank(question, chunks):
     system_prompt = """
@@ -63,8 +75,10 @@ Reply only with the list of ranked chunk ids, nothing else. Include all the chun
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": user_prompt},
     ]
-    response = completion(model=MODEL, messages=messages, response_format=RankOrder)
-    order = RankOrder.model_validate_json(response.choices[0].message.content).order
+    response = llm.beta.chat.completions.parse(
+        model=MODEL, messages=messages, response_format=RankOrder
+    )
+    order = response.choices[0].message.parsed.order
     return [chunks[i - 1] for i in order]
 
 
@@ -80,6 +94,7 @@ def make_rag_messages(question, history, chunks):
     )
 
 
+# Query rewriting prompt — rewrites conversational question for vector search
 @retry(wait=wait)
 def rewrite_query(question, history=[]):
     message = f"""
@@ -96,7 +111,9 @@ Respond only with a short, refined question that you will use to search the Know
 It should be a VERY short specific question most likely to surface content. Focus on the question details.
 IMPORTANT: Respond ONLY with the precise knowledgebase query, nothing else.
 """
-    response = completion(model=MODEL, messages=[{"role": "system", "content": message}])
+    response = llm.chat.completions.create(
+        model=MODEL, messages=[{"role": "system", "content": message}]
+    )
     return response.choices[0].message.content
 
 
@@ -110,7 +127,7 @@ def merge_chunks(chunks, reranked):
 
 
 def fetch_context_unranked(question):
-    query = openai.embeddings.create(model=embedding_model, input=[question]).data[0].embedding
+    query = embedding_client.embeddings.create(model=embedding_model, input=[question]).data[0].embedding
     results = collection.query(query_embeddings=[query], n_results=RETRIEVAL_K)
     chunks = []
     for result in zip(results["documents"][0], results["metadatas"][0]):
@@ -119,6 +136,7 @@ def fetch_context_unranked(question):
 
 
 def fetch_context(original_question):
+    """Multi-pass retrieval: query rewriting → dual vector search → merge → LLM reranking."""
     rewritten_question = rewrite_query(original_question)
     chunks1 = fetch_context_unranked(original_question)
     chunks2 = fetch_context_unranked(rewritten_question)
@@ -131,5 +149,5 @@ def fetch_context(original_question):
 def answer_question(question: str, history: list[dict] = []) -> tuple[str, list]:
     chunks = fetch_context(question)
     messages = make_rag_messages(question, history, chunks)
-    response = completion(model=MODEL, messages=messages)
+    response = llm.chat.completions.create(model=MODEL, messages=messages)
     return response.choices[0].message.content, chunks

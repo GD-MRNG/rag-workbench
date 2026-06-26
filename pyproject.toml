@@ -13,7 +13,6 @@ dependencies = [
     "langchain-text-splitters",
     "chromadb",
     "openai",
-    "litellm",
     "tiktoken",
     "numpy",
     "scikit-learn",

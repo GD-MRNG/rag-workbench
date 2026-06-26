@@ -4,13 +4,24 @@ from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 from chromadb import PersistentClient
 from tqdm import tqdm
-from litellm import completion
 from multiprocessing import Pool
 from tenacity import retry, wait_exponential
 
 load_dotenv(override=True)
 
-MODEL = "openai/gpt-4.1-nano"
+# --- Provider config ---
+# Switch MODEL + BASE_URL to change LLM provider; no other code changes needed.
+MODEL = "gpt-4.1-nano"
+# MODEL = "claude-sonnet-4-5"    # Anthropic
+# MODEL = "gemini-2.0-flash"     # Google
+
+BASE_URL = None                   # None = OpenAI (default endpoint)
+# BASE_URL = "https://api.anthropic.com/v1/"
+# BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
+
+embedding_client = OpenAI()                  # always OpenAI for embeddings
+llm = OpenAI(base_url=BASE_URL)              # swap base_url to switch provider
+
 DB_NAME = str(Path(__file__).parent.parent / "preprocessed_db")
 collection_name = "docs"
 embedding_model = "text-embedding-3-large"
@@ -19,7 +30,6 @@ AVERAGE_CHUNK_SIZE = 100
 WORKERS = 3
 
 wait = wait_exponential(multiplier=1, min=10, max=240)
-openai = OpenAI()
 
 
 class Result(BaseModel):
@@ -93,9 +103,10 @@ def make_messages(document):
 @retry(wait=wait)
 def process_document(document):
     messages = make_messages(document)
-    response = completion(model=MODEL, messages=messages, response_format=Chunks)
-    reply = response.choices[0].message.content
-    doc_as_chunks = Chunks.model_validate_json(reply).chunks
+    response = llm.beta.chat.completions.parse(
+        model=MODEL, messages=messages, response_format=Chunks
+    )
+    doc_as_chunks = response.choices[0].message.parsed.chunks
     return [chunk.as_result(document) for chunk in doc_as_chunks]
 
 
@@ -119,7 +130,7 @@ def create_embeddings(chunks):
         chroma.delete_collection(collection_name)
 
     texts = [chunk.page_content for chunk in chunks]
-    emb = openai.embeddings.create(model=embedding_model, input=texts).data
+    emb = embedding_client.embeddings.create(model=embedding_model, input=texts).data
     vectors = [e.embedding for e in emb]
 
     collection = chroma.get_or_create_collection(collection_name)

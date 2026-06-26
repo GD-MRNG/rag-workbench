@@ -2,13 +2,14 @@ import sys
 import json
 import math
 from pathlib import Path
+from openai import OpenAI
 from pydantic import BaseModel, Field
-from litellm import completion
 from dotenv import load_dotenv
 
 load_dotenv(override=True)
 
-MODEL = "openai/gpt-4.1-nano"
+MODEL = "gpt-4.1-nano"
+llm = OpenAI()
 TEST_FILE = str(Path(__file__).parent.parent.parent / "data" / "tests.jsonl")
 
 
@@ -117,8 +118,10 @@ Please evaluate the generated answer on three dimensions:
 Provide detailed feedback and scores from 1 (very poor) to 5 (ideal) for each dimension. If the answer is wrong, then the accuracy score must be 1.""",
         },
     ]
-    judge_response = completion(model=MODEL, messages=judge_messages, response_format=AnswerEval)
-    answer_eval = AnswerEval.model_validate_json(judge_response.choices[0].message.content)
+    judge_response = llm.beta.chat.completions.parse(
+        model=MODEL, messages=judge_messages, response_format=AnswerEval
+    )
+    answer_eval = judge_response.choices[0].message.parsed
     return answer_eval, generated_answer, retrieved_docs
 
 

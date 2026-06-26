@@ -10,6 +10,19 @@ Built around **Insurellm** — a fictional insurance company with 71 markdown do
 
 ---
 
+## What this demonstrates
+
+| Concept | Where to find it |
+|---|---|
+| Full RAG pipeline (chunk → embed → retrieve → generate) | `phase3_baseline/implementation/` |
+| Multi-provider LLM switching (OpenAI / Anthropic / Gemini) | `phase5_optimized/implementation/answer.py` — `MODEL` + `BASE_URL` |
+| Retrieval optimisation: query rewriting + multi-pass + LLM reranking | `phase5_optimized/implementation/answer.py` — `fetch_context()` |
+| LLM-based chunking with structured output (Pydantic) | `phase5_optimized/implementation/ingest.py` |
+| LLM-as-judge evaluation + retrieval metrics (MRR, nDCG) | `phase3_baseline/implementation/evaluate.py` |
+| Prompt engineering: grounding, query rewriting, reranking | `phase5_optimized/implementation/answer.py` |
+
+---
+
 ## The Six Phases
 
 | Phase | Type | Output |
@@ -95,6 +108,17 @@ cd phase3_baseline && uv run python app.py
 uv run python -m phase3_baseline.implementation.evaluate 0
 ```
 
+The evaluation framework is what makes the pipeline comparison meaningful — both phases are scored against the same fixed benchmark.
+
+| Metric | What it measures |
+|--------|-----------------|
+| **MRR** (Mean Reciprocal Rank) | Average rank of first keyword occurrence across retrieved docs |
+| **nDCG** (Normalized Discounted Cumulative Gain) | Ranking quality using binary keyword relevance |
+| **Keyword Coverage** | % of expected keywords found in top-10 retrieved docs |
+| **Accuracy** (1–5) | LLM-as-judge: factual correctness vs reference answer |
+| **Completeness** (1–5) | LLM-as-judge: coverage of all aspects of the reference answer |
+| **Relevance** (1–5) | LLM-as-judge: how directly the question is answered |
+
 ---
 
 ## Phase 5 — Optimized Pipeline
@@ -125,21 +149,6 @@ uv run jupyter lab
 
 - `notebooks/phase2_exploration.ipynb` — character/token counts, HuggingFace embeddings, t-SNE 2D/3D
 - `notebooks/phase4_exploration.ipynb` — LLM chunking, reranking, query rewriting experiments
-
----
-
-## Evaluation Metrics
-
-| Metric | What it measures |
-|--------|-----------------|
-| **MRR** (Mean Reciprocal Rank) | Average rank of first keyword occurrence across retrieved docs |
-| **nDCG** (Normalized Discounted Cumulative Gain) | Ranking quality using binary keyword relevance |
-| **Keyword Coverage** | % of expected keywords found in top-10 retrieved docs |
-| **Accuracy** (1–5) | LLM-as-judge: factual correctness vs reference answer |
-| **Completeness** (1–5) | LLM-as-judge: coverage of all aspects of the reference answer |
-| **Relevance** (1–5) | LLM-as-judge: how directly the question is answered |
-
-The benchmark (`data/tests.jsonl`) contains 150 questions across 7 categories: `direct_fact`, `temporal`, `comparative`, `numerical`, `relationship`, `spanning`, and `holistic`.
 
 ---
 
