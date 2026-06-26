@@ -8,6 +8,8 @@ The methodology separates exploration (notebooks, fast and disposable) from comm
 
 Built around **Insurellm** — a fictional insurance company with 71 markdown documents covering company info, products, employees, and contracts.
 
+**This repo is a template, not a finished product.** The structure and code are here for you to replicate in your own projects — swap in your own knowledge base, run the phases, and see what configuration works best for your data.
+
 ---
 
 ## What this demonstrates
