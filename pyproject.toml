@@ -1,0 +1,27 @@
+[project]
+name = "rag-workbench"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "gradio",
+    "python-dotenv",
+    "langchain",
+    "langchain-openai",
+    "langchain-chroma",
+    "langchain-huggingface",
+    "langchain-community",
+    "langchain-text-splitters",
+    "chromadb",
+    "openai",
+    "litellm",
+    "tiktoken",
+    "numpy",
+    "scikit-learn",
+    "plotly",
+    "pydantic",
+    "tenacity",
+    "tqdm",
+    "ipykernel",
+    "nbformat",
+    "jupyterlab",
+]
