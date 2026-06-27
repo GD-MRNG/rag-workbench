@@ -152,6 +152,18 @@ uv run jupyter lab
 - `notebooks/phase2_exploration.ipynb` — character/token counts, HuggingFace embeddings, t-SNE 2D/3D
 - `notebooks/phase4_exploration.ipynb` — LLM chunking, reranking, query rewriting experiments
 
+### Phase 2 — Embedding Visualisations
+
+413 chunks across 4 document types (blue=products, green=employees, red=contracts, orange=company).
+
+| Model | Dims | 2D t-SNE | 3D t-SNE |
+|-------|-----:|----------|----------|
+| `all-MiniLM-L6-v2` | 384 | ![](assets/phase2/all-MiniLM-L6-v2/2d_tsne.png) | ![](assets/phase2/all-MiniLM-L6-v2/3d_tsne.png) |
+| `text-embedding-3-small` | 1,536 | ![](assets/phase2/text-embedding-3-small/2d_tsne.png) | ![](assets/phase2/text-embedding-3-small/3d_tsne.png) |
+| `text-embedding-3-large` | 3,072 | ![](assets/phase2/text-embedding-3-large/2d_tsne.png) | ![](assets/phase2/text-embedding-3-large/3d_tsne.png) |
+
+See [`docs/phase_2_embedding_progression.md`](docs/phase_2_embedding_progression.md) for the full model comparison log.
+
 ---
 
 ## Further Reading
