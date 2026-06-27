@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 
 load_dotenv(override=True)
 
-MODEL = "gpt-4.1-nano"
+MODEL = "gpt-4.1-mini"
 DB_NAME = str(Path(__file__).parent.parent / "vector_db")
 RETRIEVAL_K = 10
 
@@ -30,8 +30,14 @@ def fetch_context(question: str) -> list[Document]:
     return retriever.invoke(question, k=RETRIEVAL_K)
 
 
+def extract_text(content) -> str:
+    if isinstance(content, list):
+        return " ".join(item.get("text", "") for item in content if item.get("type") == "text")
+    return content or ""
+
+
 def combined_question(question: str, history: list[dict] = []) -> str:
-    prior = "\n".join(m["content"] for m in history if m["role"] == "user")
+    prior = "\n".join(extract_text(m["content"]) for m in history if m["role"] == "user")
     return prior + "\n" + question
 
 

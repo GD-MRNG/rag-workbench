@@ -33,7 +33,7 @@ Built around **Insurellm** — a fictional insurance company with 71 markdown do
 | 2 — Explore the Data | Notebook | t-SNE visualizations, chunking insights |
 | 3 — Build LangChain MVP | Python + Gradio | Baseline app + benchmark score |
 | 4 — Explore Custom Configs | Notebook | Reranking, query rewriting experiments |
-| 5 — Build Custom MVP | Python + Gradio | Optimized app + improved benchmark score |
+| 5 — Build Custom MVP | Python + Gradio | Optimized app + benchmark score |
 | 6 — Report Results | Written | Comparison document |
 
 ---
@@ -97,7 +97,10 @@ cp .env.example .env
 
 ## Phase 3 — Baseline Pipeline
 
-Uses LangChain with `RecursiveCharacterTextSplitter` (500 chars) and `text-embedding-3-large`.
+![Insurellm Expert Assistant UI](assets/phase3/chat_ui.png)
+
+
+Uses LangChain with `RecursiveCharacterTextSplitter` (1000 chars) and `text-embedding-3-large`.
 
 ```bash
 # 1. Ingest knowledge base → creates phase3_baseline/vector_db/
@@ -108,7 +111,12 @@ cd phase3_baseline && uv run python app.py
 
 # 3. Evaluate a single test (0-indexed)
 uv run python -m phase3_baseline.implementation.evaluate 0
+
+# 4. Launch the evaluation dashboard (runs all 150 tests)
+cd phase3_baseline && uv run python evaluator.py
 ```
+
+![RAG Evaluation Dashboard](assets/phase3/evaluator_ui.png)
 
 The evaluation framework is what makes the pipeline comparison meaningful — both phases are scored against the same fixed benchmark.
 
@@ -170,3 +178,9 @@ See [`docs/phase_2_embedding_progression.md`](docs/phase_2_embedding_progression
 
 - [`docs/methodology.md`](docs/methodology.md) — the full six-phase framework: rationale, organisational context, and what success looks like
 - [`docs/benchmark-generation.md`](docs/benchmark-generation.md) — how the benchmark was generated and how to adapt it for a new knowledge base
+
+---
+
+## Acknowledgements
+
+This project draws heavily on ideas and structure from [Ed Donner's llm_engineering repository](https://github.com/ed-donner/llm_engineering/tree/main/week5), which was a genuinely helpful example of how to build and evaluate a RAG pipeline end to end. I've adapted, extended, and restructured it here for my own use cases and learning.

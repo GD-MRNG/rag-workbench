@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 
 load_dotenv(override=True)
 
-MODEL = "gpt-4.1-nano"
+MODEL = "gpt-4.1-mini"
 llm = OpenAI()
 TEST_FILE = str(Path(__file__).parent.parent.parent / "data" / "tests.jsonl")
 
@@ -38,10 +38,10 @@ class RetrievalEval(BaseModel):
 
 
 class AnswerEval(BaseModel):
-    feedback: str = Field(description="Concise feedback on the answer quality")
-    accuracy: float = Field(description="Factual correctness vs reference answer (1-5)")
-    completeness: float = Field(description="Coverage of all aspects of the question (1-5)")
-    relevance: float = Field(description="How directly the question is answered (1-5)")
+    feedback: str = Field(description="Concise feedback on the answer quality, comparing it to the reference answer and evaluating based on the retrieved context")
+    accuracy: float = Field(description="How factually correct is the answer compared to the reference answer? 1 (wrong. any wrong answer must score 1) to 5 (ideal - perfectly accurate). An acceptable answer would score 3.")
+    completeness: float = Field(description="How complete is the answer in addressing all aspects of the question? 1 (very poor - missing key information) to 5 (ideal - all the information from the reference answer is provided completely). Only answer 5 if ALL information from the reference answer is included.")
+    relevance: float = Field(description="How relevant is the answer to the specific question asked? 1 (very poor - off-topic) to 5 (ideal - directly addresses question and gives no additional information). Only answer 5 if the answer is completely relevant to the question and gives no additional information.")
 
 
 def calculate_mrr(keyword: str, retrieved_docs: list) -> float:
@@ -70,9 +70,13 @@ def calculate_ndcg(keyword: str, retrieved_docs: list, k: int = 10) -> float:
     return dcg / idcg if idcg > 0 else 0.0
 
 
-def evaluate_retrieval(test: TestQuestion, k: int = 10) -> RetrievalEval:
-    from phase3_baseline.implementation.answer import fetch_context
+try:
+    from phase3_baseline.implementation.answer import fetch_context, answer_question as _answer_question
+except ModuleNotFoundError:
+    from implementation.answer import fetch_context, answer_question as _answer_question
 
+
+def evaluate_retrieval(test: TestQuestion, k: int = 10) -> RetrievalEval:
     retrieved_docs = fetch_context(test.question)
     mrr_scores = [calculate_mrr(keyword, retrieved_docs) for keyword in test.keywords]
     avg_mrr = sum(mrr_scores) / len(mrr_scores) if mrr_scores else 0.0
@@ -91,9 +95,7 @@ def evaluate_retrieval(test: TestQuestion, k: int = 10) -> RetrievalEval:
 
 
 def evaluate_answer(test: TestQuestion) -> tuple[AnswerEval, str, list]:
-    from phase3_baseline.implementation.answer import answer_question
-
-    generated_answer, retrieved_docs = answer_question(test.question)
+    generated_answer, retrieved_docs = _answer_question(test.question)
     judge_messages = [
         {
             "role": "system",

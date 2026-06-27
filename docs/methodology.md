@@ -103,11 +103,11 @@ Nothing in this phase is permanent. It is purely about understanding the shape o
 
 We migrate the best-performing Phase 2 pipeline into structured Python code. The implementation has three modules:
 
-- **`ingest.py`** — loads all `.md` files from the knowledge base, adds folder-name metadata (`doc_type`), chunks with `RecursiveCharacterTextSplitter` (500 characters, 200 overlap), embeds with `text-embedding-3-large`, and stores in a local Chroma vector database. Run once to populate the database.
-- **`answer.py`** — the retrieval and generation pipeline. Combines conversation history with the current question to improve retrieval, fetches the top 10 documents (`RETRIEVAL_K = 10`), and calls `gpt-4.1-nano` with a system prompt containing the retrieved context.
+- **`ingest.py`** — loads all `.md` files from the knowledge base, adds folder-name metadata (`doc_type`), chunks with `RecursiveCharacterTextSplitter` (1000 characters, 200 overlap), embeds with `text-embedding-3-large`, and stores in a local Chroma vector database. Run once to populate the database.
+- **`answer.py`** — the retrieval and generation pipeline. Combines conversation history with the current question to improve retrieval, fetches the top 10 documents (`RETRIEVAL_K = 10`), and calls `gpt-4.1-mini` with a system prompt containing the retrieved context.
 - **`evaluate.py`** — runs the benchmark. For each test question it calculates retrieval metrics (MRR, nDCG, keyword coverage) and calls an LLM judge that scores the generated answer against the reference answer on accuracy, completeness, and relevance (each 1–5).
 
-These are wrapped in a Gradio interface — a chat panel on the left, retrieved context on the right — so the system can be used interactively as well as evaluated programmatically.
+These are wrapped in two Gradio interfaces: `app.py` — a chat panel on the left, retrieved context on the right — for interactive use; and `evaluator.py` — an evaluation dashboard that runs all 150 benchmark tests and displays colour-coded aggregate scores and per-category bar charts.
 
 This system will not be perfect. That is expected and fine. Its purpose is to establish an honest, measurable baseline — a score against the benchmark that every subsequent configuration change is trying to beat. Because every project starts from the same LangChain foundation, this score is also comparable across projects.
 
@@ -199,6 +199,7 @@ Accuracy, completeness, and relevance are scored by an LLM judge that sees the g
     phase4_exploration.ipynb
   /phase3_baseline/         ← LangChain MVP
     app.py
+    evaluator.py
     /implementation/
       ingest.py
       answer.py
