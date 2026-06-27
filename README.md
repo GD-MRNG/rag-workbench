@@ -131,6 +131,17 @@ Armed with a baseline score, we return to a notebook to test techniques beyond L
 - **Reranking** — after vector retrieval, a second LLM call re-orders results by true relevance to the question
 - **Multi-pass retrieval** — retrieves on both the original and rewritten query, merges and deduplicates before reranking
 
+### LLM-Enhanced Chunk Embeddings (t-SNE)
+
+These visualise the vector space after LLM-based chunking — each chunk carries a headline, summary, and original text, so the embedding space is denser and semantically richer than the plain-text chunks in Phase 2.
+
+| Model | Dims | 2D t-SNE | 3D t-SNE |
+|-------|-----:|----------|----------|
+| `text-embedding-3-small` | 1,536 | ![](assets/phase4/text-embedding-3-small/2d_tsne.png) | ![](assets/phase4/text-embedding-3-small/3d_tsne.png) |
+| `text-embedding-3-large` | 3,072 | ![](assets/phase4/text-embedding-3-large/2d_tsne.png) | ![](assets/phase4/text-embedding-3-large/3d_tsne.png) |
+
+Colors: blue=products, green=employees, red=contracts, orange=company
+
 ---
 
 ## Phase 5 — Optimized Pipeline
@@ -188,8 +199,10 @@ rag-workbench/
 │       ├── answer.py
 │       └── evaluate.py
 ├── assets/
-│   ├── phase2/              # t-SNE embedding visualisations
-│   └── phase3/              # UI screenshots
+│   ├── phase2/              # t-SNE visualisations (plain chunks, 3 embedding models)
+│   ├── phase3/              # UI screenshots
+│   ├── phase4/              # t-SNE visualisations (LLM-enhanced chunks)
+│   └── phase5/              # UI screenshots
 ├── docs/
 │   ├── methodology.md
 │   ├── benchmark-generation.md
