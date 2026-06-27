@@ -71,7 +71,10 @@ def calculate_ndcg(keyword: str, retrieved_docs: list, k: int = 10) -> float:
 
 
 def evaluate_retrieval(test: TestQuestion, k: int = 10) -> RetrievalEval:
-    from phase5_optimized.implementation.answer import fetch_context
+    try:
+        from phase5_optimized.implementation.answer import fetch_context
+    except ModuleNotFoundError:
+        from implementation.answer import fetch_context
 
     retrieved_docs = fetch_context(test.question)
     mrr_scores = [calculate_mrr(keyword, retrieved_docs) for keyword in test.keywords]
@@ -91,7 +94,10 @@ def evaluate_retrieval(test: TestQuestion, k: int = 10) -> RetrievalEval:
 
 
 def evaluate_answer(test: TestQuestion) -> tuple[AnswerEval, str, list]:
-    from phase5_optimized.implementation.answer import answer_question
+    try:
+        from phase5_optimized.implementation.answer import answer_question
+    except ModuleNotFoundError:
+        from implementation.answer import answer_question
 
     generated_answer, retrieved_docs = answer_question(test.question)
     judge_messages = [

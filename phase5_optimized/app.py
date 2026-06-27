@@ -14,8 +14,14 @@ def format_context(context):
     return result
 
 
+def extract_text(content):
+    if isinstance(content, list):
+        return " ".join(item.get("text", "") for item in content if item.get("type") == "text")
+    return content or ""
+
+
 def chat(history):
-    last_message = history[-1]["content"]
+    last_message = extract_text(history[-1]["content"])
     prior = history[:-1]
     answer, context = answer_question(last_message, prior)
     history.append({"role": "assistant", "content": answer})
@@ -28,13 +34,13 @@ def main():
 
     theme = gr.themes.Soft(font=["Inter", "system-ui", "sans-serif"])
 
-    with gr.Blocks(title="Insurellm Expert Assistant (Optimized)", theme=theme) as ui:
+    with gr.Blocks(title="Insurellm Expert Assistant (Optimized)") as ui:
         gr.Markdown("# Insurellm Expert Assistant (Optimized)\nAsk me anything about Insurellm!")
 
         with gr.Row():
             with gr.Column(scale=1):
                 chatbot = gr.Chatbot(
-                    label="Conversation", height=600, type="messages", show_copy_button=True
+                    label="Conversation", height=600, buttons=["copy", "copy_all"]
                 )
                 message = gr.Textbox(
                     label="Your Question",
@@ -54,7 +60,7 @@ def main():
             put_message_in_chatbot, inputs=[message, chatbot], outputs=[message, chatbot]
         ).then(chat, inputs=chatbot, outputs=[chatbot, context_markdown])
 
-    ui.launch(inbrowser=True)
+    ui.launch(inbrowser=True, theme=theme)
 
 
 if __name__ == "__main__":

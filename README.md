@@ -204,7 +204,14 @@ cd phase5_optimized && uv run python app.py
 
 # 3. Evaluate a single test
 uv run python -m phase5_optimized.implementation.evaluate 0
+
+# 4. Launch the evaluation dashboard (all 150 tests)
+cd phase5_optimized && uv run python evaluator.py
 ```
+
+![Insurellm Expert Assistant (Optimized)](assets/phase5/chat_ui.png)
+
+![RAG Evaluation Dashboard (Optimized)](assets/phase5/evaluator_ui.png)
 
 ---
 
