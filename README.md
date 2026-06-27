@@ -37,6 +37,8 @@ Built around **Insurellm** — a fictional insurance company with 76 markdown do
 | 5 — Build Custom MVP | Python + Gradio | Optimised app + improved benchmark score |
 | 6 — Report Results | Written | Quantified comparison of baseline vs optimised |
 
+See [`docs/methodology.md`](docs/methodology.md) for the full rationale behind this structure and what success looks like at each phase.
+
 ---
 
 ## Setup
@@ -75,8 +77,6 @@ Chunks and embeds the knowledge base, then visualises the vector space with t-SN
 | `text-embedding-3-large` | 3,072 | ![](assets/phase2/text-embedding-3-large/2d_tsne.png) | ![](assets/phase2/text-embedding-3-large/3d_tsne.png) |
 
 Colors: blue=products, green=employees, red=contracts, orange=company
-
-See [`docs/phase_2_embedding_progression.md`](docs/phase_2_embedding_progression.md) for the full model comparison log.
 
 ---
 
@@ -219,7 +219,15 @@ cd phase5_optimized && uv run python evaluator.py
 
 With two complete systems and two benchmark scores, the final phase is a written report covering: what the knowledge base looked like, what the baseline produced and where it fell short, which configurations were tested and why, and a direct comparison of scores between Phase 3 and Phase 5.
 
-See [`docs/methodology.md`](docs/methodology.md) for the full six-phase framework and what success looks like.
+### Insurellm findings summary
+
+The optimised pipeline (Phase 5) is currently performing worse than the baseline (Phase 3). This is not a failure — it is the expected output of a structured process. We now know exactly where we stand: which techniques have been tested, what the scores look like, and how much ground needs to be recovered before the optimised pipeline earns the right to replace the baseline.
+
+Without a fixed benchmark, a worse result would be invisible. The team would ship a more complex pipeline and simply not know. With one, we can iterate with confidence.
+
+**Current recommendation: continue using the Phase 3 baseline.** Phase 5 is an active experiment. The next step is to isolate which techniques are causing the regression and run targeted experiments until scores exceed Phase 3.
+
+See [`docs/findings.md`](docs/findings.md) for the full breakdown — configurations, scores, trade-offs, and next steps.
 
 ---
 
@@ -259,7 +267,9 @@ rag-workbench/
 ├── docs/
 │   ├── methodology.md
 │   ├── benchmark-generation.md
-│   └── phase_2_embedding_progression.md
+│   ├── rag-optimization-techniques.md
+│   ├── report-template.md
+│   └── findings.md
 ├── pyproject.toml
 └── .env.example
 ```
@@ -268,9 +278,10 @@ rag-workbench/
 
 ## Further Reading
 
-- [`docs/methodology.md`](docs/methodology.md) — the full six-phase framework: rationale, organisational context, and what success looks like
 - [`docs/benchmark-generation.md`](docs/benchmark-generation.md) — how the benchmark was generated and how to adapt it for a new knowledge base
-- [`docs/phase_2_embedding_progression.md`](docs/phase_2_embedding_progression.md) — embedding model comparison log from Phase 2
+- [`docs/rag-optimization-techniques.md`](docs/rag-optimization-techniques.md) — deep dive on LLM chunking, query rewriting, and reranking
+- [`docs/report-template.md`](docs/report-template.md) — blank Phase 6 report template for use with your own knowledge base
+- [`docs/findings.md`](docs/findings.md) — full Insurellm findings: configurations, scores, trade-offs, and recommendation
 
 ---
 
