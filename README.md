@@ -131,6 +131,52 @@ Armed with a baseline score, we return to a notebook to test techniques beyond L
 - **Reranking** — after vector retrieval, a second LLM call re-orders results by true relevance to the question
 - **Multi-pass retrieval** — retrieves on both the original and rewritten query, merges and deduplicates before reranking
 
+### LLM-based chunking
+
+Instead of splitting by character count, an LLM reads each document and returns structured chunks — each with a headline, a short summary, and the verbatim original text. This makes each chunk independently retrievable on multiple levels:
+
+```
+Founding and Initial Growth of Insurellm
+
+Insurellm was founded in 2015 by Avery Lancaster as an insurance tech startup
+aimed at innovating the insurance sector. The company began with its first
+product, Markellm, a marketplace connecting consumers to insurance providers.
+It experienced rapid growth...
+```
+
+The headline surfaces in queries about topics; the summary catches paraphrased questions; the original text handles exact-match retrieval. All three travel together into the vector store as a single embedding.
+
+### Query rewriting
+
+Before retrieval, the user's conversational question is reformulated into a terse, precise KB search query — stripping filler and focusing on the specific terms most likely to surface relevant chunks.
+
+```
+"What can you tell me about that award Maxine won last year?"
+  → "IIOTY award winner 2023"
+
+"I heard the company started in someone's garage — is that true?"
+  → "Insurellm founding story origin"
+
+"We talked about the health product earlier — what does it cost?"
+  → "CareLlm pricing"
+```
+
+In multi-turn conversations, the rewriter also folds in prior context so a vague follow-up ("what about the pricing?") resolves correctly against the current topic.
+
+### Reranking
+
+After retrieving the top-K chunks by vector similarity, a second LLM call re-orders them by true relevance to the question. The model sees the question and all retrieved chunks and returns a ranked list — moving the most relevant material to the top before it reaches the context window.
+
+```python
+def answer_question(question, history=[]):
+    query = rewrite_query(question, history)   # reformulate for KB search
+    chunks = fetch_context_unranked(query)     # vector retrieval
+    reranked = rerank(question, chunks)        # LLM re-orders by relevance
+    messages = make_rag_messages(question, history, reranked)
+    response = openai.chat.completions.create(model=MODEL, messages=messages)
+    return response.choices[0].message.content, reranked
+```
+
 ### LLM-Enhanced Chunk Embeddings (t-SNE)
 
 These visualise the vector space after LLM-based chunking — each chunk carries a headline, summary, and original text, so the embedding space is denser and semantically richer than the plain-text chunks in Phase 2.
